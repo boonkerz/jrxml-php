@@ -29,7 +29,11 @@ class Band
 
 		// Band properties
 		$this->jasperReport->processSingleElement( "jr:band", function ( $node ) use ($that) {
-			$that->height = $node->attributes->getNamedItem( "height" )->nodeValue;
+
+			$height = $node->attributes->getNamedItem( "height" );
+			if( $height !== null ) {
+				$that->height = $height->nodeValue;
+			}
 			//$that->splitType = $node->attributes->getNamedItem( "splitType" )->nodeValue;
 		}, $this->node );
 
@@ -42,6 +46,9 @@ class Band
 			{
 				case 'textField':
 					$el = new Component\TextField( $that->jasperReport, $node );
+					break;
+				case 'image':
+					$el = new Component\Image( $that->jasperReport, $node );
 					break;
 				case 'staticText':
 					$el = new Component\StaticText( $that->jasperReport, $node );
@@ -58,7 +65,7 @@ class Band
 			if ( $el != null )
 				$that->elements[] = $el;
 
-		}, $this->node );
+		}, $this->node);
 
 	}
 

@@ -24,7 +24,7 @@ class TextField extends Component
 				$that->font = $that->jasperReport->getAttributes( $node );
 			}, $node );
 
-		}, $this->node );
+		}, $this->node, false);
 
 		// Text field expression
 		$this->jasperReport->processSingleElement( "jr:textFieldExpression", function ( $node ) use ( $that ) {

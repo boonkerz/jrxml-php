@@ -47,19 +47,17 @@ function evalString( $string, DataBag $dataBag )
 	{
 		if ( $def->class == 'java.lang.Integer' )
 		{
-			$value = $dataBag->fieldVals->$key;
+			$value = $dataBag->fieldVals[$key];
 		}
 		else
 		{
-			$value = sprintf( "'%s'", addslashes( $dataBag->fieldVals->$key ) );
+			$value = sprintf( "'%s'", addslashes( $dataBag->fieldVals[$key] ) );
 		}
 		
 		$string = str_replace( sprintf( '$F{%s}', $key ), $value, $string );
 	}
 
 	$exec = sprintf( 'return %s;', $string );
-
-	//echo $exec . PHP_EOL;
 
 	return eval( $exec );
 

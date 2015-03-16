@@ -30,6 +30,8 @@ class JasperReport
 
 	private $dataSource;
 
+	private $reportPath = "";
+
 	function __construct( $filename )
 	{
 		$this->dom = new \DomDocument();
@@ -37,6 +39,8 @@ class JasperReport
 		{
 			throw new \Exception( "Failed to load report file" );
 		}
+
+		$this->reportPath = dirname($filename);
 
 		$this->xpath = new \DOMXPath( $this->dom );
 		$this->xpath->registerNamespace( 'jr', "http://jasperreports.sourceforge.net/jasperreports" );
@@ -75,7 +79,7 @@ class JasperReport
 		// Query
 		$this->processSingleElement( "//jr:jasperReport/jr:queryString",  function ( $node ) use ( $that ) {
 			$that->queryString = $node->textContent;
-		});
+		}, null, false);
 
 		// Fields
 		$this->processElements( "/jr:jasperReport/jr:field", function ( $field ) use ($that) {
@@ -114,17 +118,19 @@ class JasperReport
 		}
 	}
 
-	function processSingleElement( $path, $callback, $context = null )
+	function processSingleElement( $path, $callback, $context = null, $breakWhenNotFound = true )
 	{
 		if ( $context == null )
 			$content = $this->root;
 
 		$r = $this->xpath->query( $path, $context, false );
 
-		if ( $r->length == 0 )
+		if ( $r->length == 0 && $breakWhenNotFound)
 			throw new \Exception( "Attempting to fetch a element where none exists : " . $path );
 
-		call_user_func( $callback, $r->item(0) );
+		if( $r->length > 0) {
+			call_user_func($callback, $r->item(0));
+		}
 
 	}
 
@@ -156,8 +162,9 @@ class JasperReport
 		
 		// Execute main query
 		$query = evalQuery( $this->queryString, new DataBag( $this->parameters, $params ) );
-		$rows = $datasource->execQuery( $query );
+		$datasource->execQuery( $query );
 
+		$rows = $datasource->getRows();
 
 		// page one
 		$cursor['x'] += $this->attributes['leftMargin'];
@@ -175,7 +182,6 @@ class JasperReport
 		
 
 		// Detail
-
 		if ( isset( $this->bands['detail'] ) && $this->bands['detail']->height > 0 )
 		{
 			foreach( $rows as $row )
@@ -189,6 +195,9 @@ class JasperReport
 
 		// pageFooter
 		$this->renderBand( 'pageFooter', $cursor, new DataBag( $this->parameters, $params, $this->fields, $rows[0] ) );
+
+		// summary
+		$this->renderBand( 'summary', $cursor, new DataBag( $this->parameters, $params, $this->fields, $rows[0] ) );
 
 		return $this->outputAdapter;
 
@@ -266,6 +275,14 @@ class JasperReport
 			return $this->subDatasets[ $id ];
 		else
 			return false;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getReportPath()
+	{
+		return $this->reportPath . '/';
 	}
 
 }

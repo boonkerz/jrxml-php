@@ -2,22 +2,24 @@
 
 namespace JasperReport\OutputAdapter;
 
-use fpdf\FPDF;
+use TCPDF;
 
-class FPDFOutputAdapter implements OutputAdapterInterface
+class TCPDFOutputAdapter implements OutputAdapterInterface
 {
 
 	private $pdf;
 
-	function __construct( $orientation = "Portrait", $units = "pt", $size = "A4" )
+	function __construct( $orientation = "P", $units = "pt", $size = "A4" )
 	{
-		$this->pdf = new FPDF( $orientation, $units, $size );
+		$this->pdf = new TCPDF($orientation, $units, $size);
 	}
 
 	function pageSetup()
 	{
+		$this->pdf->setPrintHeader(false);
+    	$this->pdf->setPrintFooter(false);
 		$this->pdf->SetMargins( 0, 0, 0, 0 );
-		$this->pdf->SetFont('Arial', 'B', 12 );
+		//$this->pdf->SetFont('Arial', 'B', 12 );
 		$this->pdf->SetAutoPageBreak( false );
 		$this->pdf->AddPage();
 	}
@@ -36,11 +38,10 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 		$textStyle .= ( $drawable->textStyle->italic ) ? 'I' : '';
 		$textStyle .= ( $drawable->textStyle->underline ) ? 'U' : '';
 
-		//var_dump( array( $drawable->text, $textStyle ) );
-		$this->pdf->SetFont( 'Arial', $textStyle, $drawable->textStyle->size );
+		$this->pdf->SetFont( 'times', $textStyle, $drawable->textStyle->size );
 
 		if ( ! isset( $drawable->textAlign ) )
-			$drawable->textAlign = '';			
+			$drawable->textAlign = '';
 
 		switch( $drawable->textAlign )
 		{
@@ -59,7 +60,7 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 		}
 
 		if ( ! isset( $drawable->verticalAlign ) )
-			$drawable->verticalAlign = '';			
+			$drawable->verticalAlign = '';
 
 
 		if ( $drawable->forecolor != null )
@@ -76,7 +77,7 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 		if ( $drawable->backcolor != null )
 		{
 			$backcolor = $this->hex2RGB( $drawable->backcolor );
-			$this->pdf->SetFillColor( $backcolor['red'], $backcolor['green'], $backcolor['blue'] );			
+			$this->pdf->SetFillColor( $backcolor['red'], $backcolor['green'], $backcolor['blue'] );
 		}
 
 
@@ -87,7 +88,7 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 			$borders = 'TRLB';
 			$this->pdf->SetLineWidth( $drawable->cellStyle->lineWidth );
 		}
-			
+
 
 		$this->pdf->Cell( $drawable->width, $drawable->height, '', $borders, null, null, $drawable->mode == 'Opaque' );
 
@@ -95,27 +96,22 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 		switch( $drawable->verticalAlign )
 		{
 			case 'Middle':
+				$cellPaddings = $this->pdf->getCellPaddings();
 				$lines = ceil( $this->pdf->GetStringWidth( $drawable->text ) / $drawable->width );
-				$yOffset = $this->pdf->FontSize * ( $lines - 0.5 ) - ( $this->pdf->cMargin / 2 );
-				$this->pdf->SetXY( $drawable->x, $drawable->y + $yOffset );
-				$this->pdf->MultiCell( $drawable->width, $this->pdf->FontSize, $drawable->text, null, $align );
+				$yOffset = $this->pdf->getFontSize() * ( $lines - 0.5 ) - $cellPaddings['T'];
+				$this->pdf->SetXY( $drawable->x, $drawable->y + 0 );
+				$this->pdf->MultiCell( $drawable->width, $this->pdf->getFontSize(), $drawable->text, null, $align );
 				break;
 			case 'Bottom':
 				$lines = ceil( $this->pdf->GetStringWidth( $drawable->text ) / $drawable->width );
-				$yOffset = $this->pdf->FontSize * ( $lines + 0.5 );
+				$yOffset = $this->pdf->getFontSize() * ( $lines + 0.5 );
 				$this->pdf->SetXY( $drawable->x, $drawable->y + $drawable->height - $yOffset );
-				$this->pdf->MultiCell( $drawable->width, $this->pdf->FontSize, $drawable->text, null, $align );
+				$this->pdf->MultiCell( $drawable->width, $this->pdf->getFontSize(), $drawable->text, null, $align );
 				break;
 			case 'Top':
 				$this->pdf->SetXY( $drawable->x, $drawable->y );
-				$this->pdf->MultiCell( $drawable->width, $this->pdf->FontSize, $drawable->text, null, $align );
-		}		
-
-		
-
-		// $this->pdf->SetXY( $drawable->x, $drawable->y );
-		// $this->pdf->MultiCell( $drawable->width, $this->pdf->FontSize, $drawable->text, null, $align );
-		// $this->pdf->Cell( $drawable->width, $drawable->height, $drawable->text, null, null, $align );
+				$this->pdf->MultiCell( $drawable->width, $this->pdf->getFontSize(), $drawable->text, null, $align );
+		}
 
 	}
 
@@ -147,7 +143,7 @@ class FPDFOutputAdapter implements OutputAdapterInterface
 
 	function nextPage()
 	{
-		$this->pdf->AddPage();
+
 	}
 
 	function output()

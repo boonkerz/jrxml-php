@@ -6,6 +6,7 @@ class MysqlDatasource implements DatasourceInterface
 {
 
 	private $db;
+	private $rows = array();
 
 	function __construct( $host, $username, $password, $database, $port )
 	{
@@ -32,13 +33,14 @@ class MysqlDatasource implements DatasourceInterface
 		if ( $r === false )
 			throw new \Exception( "Error with query" );
 
-		$rows = array();
-		while ( $row = $r->fetch_object() )
+		while ( $row = $r->fetch_array() )
 		{
-			$rows[ count( $rows )] = $row;
+			$this->rows[ count( $this->rows )] = $row;
 		}
+	}
 
-		return $rows;
+	function getRows() {
+		return $this->rows;
 	}
 	
 }

@@ -22,6 +22,8 @@ class Drawable
 
 	public $text = "";
 
+	public $imageSrc = false;
+
 	function __construct()
 	{
 		$this->textStyle = new \stdclass();
